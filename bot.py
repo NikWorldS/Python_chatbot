@@ -63,7 +63,6 @@ async def report_handler(message: Message,  ticket):
                                         f'У @id{user_data[0].id}({user_data[0].first_name}) возник вопрос: {ticket}')
 
 
-
 @bot.on.private_message(text='/ad <announcement>')
 async def announce_handler(message: Message, announcement):
     if message.from_id == admin_id:
