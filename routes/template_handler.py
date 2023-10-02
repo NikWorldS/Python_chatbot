@@ -23,6 +23,7 @@ async def create_layout(event: Message):
         if document.title.count(".") > 1:
             await event.answer("Произошла ошибка при определении файла, переименуйте файл так, чтобы в его названии не было точек.")
             return
+
         name, type_f = document.title.split(".")
         if type_f == 'xlsx':
             response = requests.get(document.url)
