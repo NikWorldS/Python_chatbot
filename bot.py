@@ -38,7 +38,7 @@ async def reminder():
             cur.execute(f'''UPDATE teachers_table SET next_answer_time = {generate()} WHERE teacher_vk_id = "{teacher[0]}"''')
             conn.commit()
             conn.close()
-    if math.floor(time.time()) >= readable_time:
+    if weekday_today != 5 and math.floor(time.time()) >= readable_time:
         conn = sq.connect("teachers_db.sqlite")
         cur = conn.cursor()
 
@@ -61,6 +61,7 @@ async def report_handler(message: Message,  ticket):
     await bot.api.messages.send(random_id=0, peer_id=admin_id,
                                 message=f'@id{admin_id}\n'
                                         f'У @id{user_data[0].id}({user_data[0].first_name}) возник вопрос: {ticket}')
+
 
 
 @bot.on.private_message(text='/ad <announcement>')
