@@ -25,10 +25,11 @@ def create_list_payers(class_name):
     x = 13
     payers_list = []
     wb = openpyxl.load_workbook(filename=f'attachments/Template_{class_name}.xlsx')
-    sheet = wb['Лист1']
+    sheet = wb[wb.sheetnames[0]]
+
 
     while sheet[f'b{x}'].value.lower() != 'итого':
-        payers_list.append((sheet[f'b{x}']).value)
+        payers_list.append(((sheet[f'b{x}']).value).strip())
         x += 1
     wb.close()
     return payers_list
@@ -37,7 +38,7 @@ def create_list_payers(class_name):
 def filling_template(values_dict, class_name):
     x = 13
     wb = openpyxl.load_workbook(filename=f'attachments/Template_{class_name}.xlsx')
-    sheet = wb['Лист1']
+    sheet = wb[wb.sheetnames[0]]
     week_date = datetime.datetime.today().weekday()
     columns = ['f', 'g', 'h', 'i', 'j', 'k']
     sheet[f'{columns[week_date]}12'] = datetime.datetime.now().strftime('%d')
@@ -55,7 +56,7 @@ def create_template(doc):
     try:
 
         wb = openpyxl.load_workbook(filename=f'{doc}')
-        sheet = wb['Лист1']
+        sheet = wb[wb.sheetnames[0]]
 
         sheet['F7'] = None
         sheet['H7'] = None
@@ -91,7 +92,9 @@ def create_template(doc):
             for j in range(sheet_offset.row - 1, 11, -1):
                 sheet[f'{i}{j}'] = None
 
-        class_name = sheet['d3'].value
+        class_name = sheet['d3'].value.strip()
+        class_name = "".join(class_name.split())
+        sheet['d3'] = class_name
         wb.save(f'attachments/Template_{class_name}.xlsx')
         wb.close()
         return "Файл принят"
@@ -106,7 +109,7 @@ def clear_template(class_name, date_today):
     x = 13
 
     wb = openpyxl.load_workbook(filename=f'attachments/Template_{class_name}.xlsx')
-    sheet = wb['Лист1']
+    sheet = wb[wb.sheetnames[0]]
 
     columns = ['f', 'g', 'h', 'i', 'j', 'k']
 
@@ -144,7 +147,7 @@ def send_tabel(class_name=None, mail=None):
     try:
 
         wb = openpyxl.load_workbook(filename=f'attachments/Template_{class_name}.xlsx')
-        sheet = wb['Лист1']
+        sheet = wb[wb.sheetnames[0]]
         sheet['L9'] = date_today
         month_num = datetime.datetime.now().month
         month_name = calendar.month_name[month_num]
