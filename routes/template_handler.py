@@ -1,7 +1,7 @@
 from vkbottle.bot import BotLabeler, Message
 import requests
+from .db_connector import execute_select, execute_upd_ins
 from .utils import *
-import sqlite3 as sq
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
@@ -47,11 +47,7 @@ async def filling_tabel(event: Message, missing):
 
     id_user = f"id{(await event.get_user(id)).get('id')}"
 
-    conn = sq.connect("teachers_db.sqlite")
-    cur = conn.cursor()
-
-    (cur.execute(f'''SELECT class_name FROM `teachers_table` WHERE teacher_vk_id == "{id_user}"'''))
-    class_n = cur.fetchone()[0].upper()
+    class_n = execute_select(f'''SELECT class_name FROM `teachers_table` WHERE teacher_vk_id == "{id_user}"''')[0][0]
 
     missing = missing.split()
 
@@ -65,9 +61,7 @@ async def filling_tabel(event: Message, missing):
         else:
             payers_dict[person] = 1
 
-    cur.execute(f'''UPDATE teachers_table SET next_answer_time = {generate()} WHERE teacher_vk_id = "{id_user}"''')
-    conn.commit()
-    conn.close()
+    execute_upd_ins(f'''UPDATE teachers_table SET next_answer_time = {generate()} WHERE teacher_vk_id = "{id_user}"''')
     values_list = list(payers_dict.values())
     filling_template(values_list, class_n)
     await event.answer(f"Сегодня {len(values_list) - values_list.count('н')} из {len(values_list)} платников")

@@ -1,8 +1,8 @@
 from vkbottle.bot import Message, MessageEvent
 from routes import labelers
-import sqlite3 as sq
 from vkbottle import Bot
 from routes.utils import *
+from routes.db_connector import execute_select, execute_upd_ins
 from dotenv import load_dotenv, find_dotenv
 from art import tprint
 import os
@@ -26,32 +26,24 @@ async def reminder():
     if weekday_today == 6:
         return
     if weekday_today == 5 and math.floor(time.time()) >= readable_time:
-        conn = sq.connect("teachers_db.sqlite")
-        cur = conn.cursor()
-
-        (cur.execute(f'''SELECT teacher_vk_id FROM `teachers_table` WHERE reminder = TRUE AND {readable_time + 43200} >= 
-                next_answer_time AND class_name LIKE "1%"'''))
-        answer = cur.fetchall()
-        for teacher in answer:
+        data = execute_select(
+            f'''SELECT teacher_vk_id FROM `teachers_table` WHERE reminder = TRUE AND {readable_time + 43200} >= 
+                        next_answer_time AND (class_name LIKE "1%" OR class_name LIKE "9%")''')
+        for teacher in data:
             await bot.api.messages.send(peer_id=teacher[0].replace('id', ''),
                                         message="Не забудь написать кого сегодня нет!", random_id=0)
-            cur.execute(f'''UPDATE teachers_table SET next_answer_time = {generate()} WHERE teacher_vk_id = "{teacher[0]}"''')
-            conn.commit()
-            conn.close()
+            execute_upd_ins(
+                f'''UPDATE teachers_table SET next_answer_time = {generate()} WHERE teacher_vk_id = "{teacher[0]}"''')
     if weekday_today != 5 and math.floor(time.time()) >= readable_time:
-        conn = sq.connect("teachers_db.sqlite")
-        cur = conn.cursor()
-
-        (cur.execute(f'''SELECT teacher_vk_id FROM `teachers_table` WHERE reminder = TRUE AND {readable_time + 43200} >= 
-        next_answer_time'''))
-        answer = cur.fetchall()
+        answer = execute_select(
+            f'''SELECT teacher_vk_id FROM `teachers_table` WHERE reminder = TRUE AND {readable_time + 43200} >= 
+               next_answer_time''')
 
         for teacher in answer:
             await bot.api.messages.send(peer_id=teacher[0].replace('id', ''),
                                         message="Не забудь написать кого сегодня нет!", random_id=0)
-            cur.execute(f'''UPDATE teachers_table SET next_answer_time = {generate()} WHERE teacher_vk_id = "{teacher[0]}"''')
-            conn.commit()
-        conn.close()
+            execute_upd_ins(
+                f'''UPDATE teachers_table SET next_answer_time = {generate()} WHERE teacher_vk_id = "{teacher[0]}"''')
 
 
 @bot.on.private_message(text=['/репорт <ticket>', '.репорт <ticket>'])
@@ -67,17 +59,20 @@ async def report_handler(message: Message,  ticket):
 @bot.on.private_message(text='/ad <announcement>')
 async def announce_handler(message: Message, announcement):
     if message.from_id == admin_id:
-        conn = sq.connect("teachers_db.sqlite")
-        cur = conn.cursor()
 
         data = []
-        cur.execute('''SELECT teacher_vk_id FROM teachers_table''')
-        for i in cur.fetchall():
-            data.append(i[0].replace('id', ''))
-        data.remove(str(admin_id))
-        conn.close()
-        await bot.api.messages.send(random_id=0, peer_ids=data, message=f"📢 Объявление: {announcement}")
-        await message.answer(message='Объявление было отправлено')
+
+        try:
+            answer = execute_select('''SELECT teacher_vk_id FROM teachers_table''')
+            for i in answer:
+                data.append(i[0].replace('id', ''))
+            data.remove(str(admin_id))
+            await bot.api.messages.send(random_id=0, peer_ids=data, message=f"📢 Объявление: {announcement}")
+            await message.answer(message='Объявление было отправлено')
+        except Exception as ad_error:
+            await message.answer(message=ad_error)
+            return
+
 
 for custom_labeler in labelers:
     bot.labeler.load(custom_labeler)

@@ -27,11 +27,13 @@ def create_list_payers(class_name):
     wb = openpyxl.load_workbook(filename=f'attachments/Template_{class_name}.xlsx')
     sheet = wb[wb.sheetnames[0]]
 
-
     while sheet[f'b{x}'].value.lower() != 'итого':
-        payers_list.append(((sheet[f'b{x}']).value).strip())
+        if sheet[f"b{x}"].value == sheet[f"b{x + 1}"].value:
+            payers_list.append(((sheet[f'b{x}']).value + (sheet[f'c{x}']).value).strip())
+            print(1)
+        else:
+            payers_list.append(((sheet[f'b{x}']).value).strip())
         x += 1
-    wb.close()
     return payers_list
 
 
@@ -134,6 +136,7 @@ def clear_template(class_name, date_today):
 
 def send_tabel(class_name=None, mail=None):
     date_today = datetime.datetime.today().date().strftime('%d.%m.%y')
+    day = datetime.datetime.today().date().strftime('%d')
 
     msg = MIMEMultipart()
 
@@ -148,7 +151,7 @@ def send_tabel(class_name=None, mail=None):
 
         wb = openpyxl.load_workbook(filename=f'attachments/Template_{class_name}.xlsx')
         sheet = wb[wb.sheetnames[0]]
-        sheet['L9'] = date_today
+        sheet['L9'] = day
         month_num = datetime.datetime.now().month
         month_name = calendar.month_name[month_num]
         month_name_russian = {
@@ -166,6 +169,7 @@ def send_tabel(class_name=None, mail=None):
             'December': 'Декабрь'
         }[month_name]
         sheet['K6'] = month_name_russian
+        sheet["H7"] = date_today
 
         wb.save(f'attachments/Tabel_{class_name}_{date_today}.xlsx')
         wb.close()
