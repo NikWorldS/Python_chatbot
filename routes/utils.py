@@ -10,10 +10,11 @@ import shutil
 import math
 import time
 import os
+from dotenv import load_dotenv, find_dotenv
 
-
-from_mail = 'mail.obed.test@gmail.com'
-password = 'eggsqfmlidqtmzmn'
+load_dotenv(find_dotenv())
+from_mail = os.getenv("FROM_EMAIL")
+password = os.getenv("EMAIL_PASS")
 
 
 def generate():
